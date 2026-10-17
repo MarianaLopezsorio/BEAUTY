@@ -87,34 +87,26 @@ const updateCardVariant = (card, index = 0) => {
     const descEl = card.querySelector("p");
     const statusLabel = card.querySelector(".carousel-status");
 
-    if (card.querySelector(".splash-carousel")) {
-        card.dataset.product = variant.product;
-        card.dataset.price = variant.price;
-        card.dataset.desc = variant.desc;
-        card.dataset.aroma = variant.aroma;
-        card.dataset.image = variant.image;
-        card.dataset.images = variants.map((item) => item.image).join(",");
-        return;
-    }
-
-    if (priceEl && descEl) {
-        card.classList.add("is-switching");
-        setTimeout(() => {
-            if (priceEl) priceEl.textContent = `$${variant.price}`;
-            if (descEl) descEl.textContent = variant.desc;
-            card.classList.remove("is-switching");
-        }, 120);
-    } else {
-        if (priceEl) priceEl.textContent = `$${variant.price}`;
-        if (descEl) descEl.textContent = variant.desc;
-    }
-
     card.dataset.product = variant.product;
     card.dataset.price = variant.price;
     card.dataset.desc = variant.desc;
     card.dataset.aroma = variant.aroma;
     card.dataset.image = variant.image;
     card.dataset.images = variants.map((item) => item.image).join(",");
+
+    if (!card.querySelector(".splash-carousel, .mantequilla-carousel")) {
+        if (priceEl && descEl) {
+            card.classList.add("is-switching");
+            setTimeout(() => {
+                if (priceEl) priceEl.textContent = `$${variant.price}`;
+                if (descEl) descEl.textContent = variant.desc;
+                card.classList.remove("is-switching");
+            }, 120);
+        } else {
+            if (priceEl) priceEl.textContent = `$${variant.price}`;
+            if (descEl) descEl.textContent = variant.desc;
+        }
+    }
 
     if (statusLabel) {
         statusLabel.textContent = `${variant.product} • ${variant.aroma || "Producto destacado"}`;
@@ -403,26 +395,35 @@ const cards = document.querySelectorAll(".card");
 
 const formulario = document.querySelector("form");
 
-formulario.addEventListener("submit", function(e){
+formulario?.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-    e.preventDefault();
+    const nombre = document.querySelector("#nombre").value.trim();
+    const correo = document.querySelector("#correo").value.trim();
+    const mensaje = document.querySelector("#mensaje").value.trim();
+    const status = document.querySelector("#contact-status");
 
-    const nombre = document.querySelector('input[type="text"]').value;
-    const correo = document.querySelector('input[type="email"]').value;
-    const mensaje = document.querySelector("textarea").value;
+    if (!nombre || !correo || !mensaje) return;
 
-    if(nombre === "" || correo === "" || mensaje === ""){
+    const pedido = `Hola, soy ${nombre} (${correo}). Mi lista de compra es:\n${mensaje}`;
+    const instagramWindow = window.open(
+        "https://ig.me/m/marianalopez2356",
+        "_blank"
+    );
 
-        alert("Por favor completa todos los campos.");
-
+    if (!instagramWindow) {
+        status.textContent = "Instagram no se pudo abrir. Permite las ventanas emergentes e inténtalo de nuevo.";
         return;
-
     }
+    instagramWindow.opener = null;
 
-    alert("¡Mensaje enviado correctamente!");
-
-    formulario.reset();
-
+    try {
+        await navigator.clipboard.writeText(pedido);
+        status.textContent = "Copiamos tu pedido. Pégalo en el chat de Instagram y pulsa Enviar; el mensaje no se envía automáticamente.";
+    } catch (error) {
+        window.prompt("Copia este pedido y pégalo en el chat de Instagram:", pedido);
+        status.textContent = "Pega tu pedido en el chat de Instagram y pulsa Enviar; el mensaje no se envía automáticamente.";
+    }
 });
 
 
