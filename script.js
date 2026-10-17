@@ -395,34 +395,43 @@ const cards = document.querySelectorAll(".card");
 
 const formulario = document.querySelector("form");
 
-formulario?.addEventListener("submit", async (event) => {
+formulario?.addEventListener("submit", (event) => {
     event.preventDefault();
 
-    const nombre = document.querySelector("#nombre").value.trim();
-    const correo = document.querySelector("#correo").value.trim();
-    const mensaje = document.querySelector("#mensaje").value.trim();
+    const nombre = formulario.querySelector("#nombre").value.trim();
+    const mensaje = formulario.querySelector("#mensaje").value.trim();
     const status = document.querySelector("#contact-status");
 
-    if (!nombre || !correo || !mensaje) return;
+    if (!nombre || !mensaje) return;
 
-    const pedido = `Hola, soy ${nombre} (${correo}). Mi lista de compra es:\n${mensaje}`;
+    const pedido = `¡Hola! Mi nombre es ${nombre}. Me gustaría comprar:\n\n${mensaje}`;
     const instagramWindow = window.open(
         "https://ig.me/m/marianalopez2356",
         "_blank"
     );
 
-    if (!instagramWindow) {
-        status.textContent = "Instagram no se pudo abrir. Permite las ventanas emergentes e inténtalo de nuevo.";
+    if (instagramWindow) instagramWindow.opener = null;
+
+    const showClipboardFallback = () => {
+        window.prompt("Copia este pedido y pégalo en el chat de Instagram:", pedido);
+        status.textContent = instagramWindow
+            ? "Copia el pedido, pégalo en el chat de Instagram y pulsa Enviar."
+            : "Copia el pedido. Instagram no se abrió; permite las ventanas emergentes e inténtalo de nuevo.";
+    };
+
+    if (!navigator.clipboard?.writeText) {
+        showClipboardFallback();
         return;
     }
-    instagramWindow.opener = null;
 
     try {
-        await navigator.clipboard.writeText(pedido);
-        status.textContent = "Copiamos tu pedido. Pégalo en el chat de Instagram y pulsa Enviar; el mensaje no se envía automáticamente.";
+        navigator.clipboard.writeText(pedido).then(() => {
+            status.textContent = instagramWindow
+                ? "Tu pedido está copiado. Pégalo en el chat de Instagram y pulsa Enviar."
+                : "Tu pedido está copiado. Instagram no se abrió; permite las ventanas emergentes e inténtalo de nuevo.";
+        }).catch(showClipboardFallback);
     } catch (error) {
-        window.prompt("Copia este pedido y pégalo en el chat de Instagram:", pedido);
-        status.textContent = "Pega tu pedido en el chat de Instagram y pulsa Enviar; el mensaje no se envía automáticamente.";
+        showClipboardFallback();
     }
 });
 
@@ -518,12 +527,3 @@ enlaces.forEach((enlace)=>{
     });
 
 });
-
-
-// MENSAJE DE BIENVENIDA
-
-setTimeout(()=>{
-
-    console.log("Bienvenido a Sucha Skincare 🌸");
-
-},1000);
